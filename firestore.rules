@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// Reglas de Firestore (T-14). Principios:
+// - Sin sesión (invitado) no se lee ni se escribe nada en la nube.
+// - Cada jugador solo lee y escribe sus datos privados (RNF-15).
+// - El proyecto usa el plan Spar: no hay Cloud Functions. Lo que la app escribe en
+//   nombre de otros (código de amigo, amistades, duelos) lo validan estas reglas campo por campo
+//   (RNF-16). Lo que no está permitido aquí se rechaza.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function conSesion() { return request.auth != null; }
+    function esYo(uid) { return conSesion() && request.auth.uid == uid; }
+    function soloCambia(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+    }
+    function nombreValido(n) { return n is string && n.size() >= 3 && n.size() <= 20; }
+    function docEn(ruta) { return path('/databases/' + database + '/documents/' + ruta); }
+
+    // Perfil público: lo ven los jugadores registrados (para buscar amigos y el ranking).
+    match /usuarios/{uid} {
+      allow read: if conSesion();
+      allow create: if esYo(uid)
+        && request.resource.data.keys().hasOnly(['nombre', 'nombreMinusculas', 'avatar', 'creadoEn'])
+        && nombreValido(request.resource.data.nombre)
+        && request.resource.data.nombreMinusculas == request.resource.data.nombre.lower()
+        && request.resource.data.avatar is int
+        // El nombre debe quedar reservado a su nombre en la misma operación (nombre único, RF-01).
+        && getAfter(docEn('nombres/' + request.resource.data.nombreMinusculas)).data.uid == uid;
+      allow update: if esYo(uid) && soloCambia(['avatar']) && request.resource.data.avatar is int;
+      allow delete: if false;
+
+      // Datos privados: correo, consentimiento del aviso y preferencias.
+      match /privado/{privado} {
+        allow read, write: if esYo(uid);
+      }
+      // Amigos aceptados: los crea T-53 al aceptar una solicitud.
+      match /amigos/{amigo} {
+        allow read: if esYo(uid);
+        allow write: if false;
+      }
+    }
+
+    // Reserva de nombres de jugador: garantiza que no se repitan (RF-01).
+    match /nombres/{nombre} {
+      allow read: if conSesion();
+      allow create: if conSesion()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && nombre == nombre.lower();
+      allow update: if false;
+      allow delete: if conSesion() && resource.data.uid == request.auth.uid;
+    }
+
+    // Códigos de amigo: los asigna T-51.
+    match /codigos/{codigo} {
+      allow read: if conSesion();
+      allow write: if false;
+    }
+
+    // Solicitudes de amistad (T-52, T-53). El id es «deUid_paraUid».
+    match /solicitudes/{id} {
+      allow read: if conSesion()
+        && (resource.data.de == request.auth.uid || resource.data.para == request.auth.uid);
+      allow create: if conSesion()
+        && request.resource.data.keys().hasOnly(['de', 'para', 'estado', 'creadaEn'])
+        && request.resource.data.de == request.auth.uid
+        && request.resource.data.para != request.auth.uid
+        && request.resource.data.estado == 'pendiente'
+        && id == request.auth.uid + '_' + request.resource.data.para
+        && exists(docEn('usuarios/' + request.resource.data.para))
+        && !exists(docEn('usuarios/' + request.auth.uid + '/amigos/' + request.resource.data.para));
+      // Quien la recibe la acepta o la rechaza; quien la envió puede volver a enviarla si fue rechazada.
+      allow update: if conSesion() && soloCambia(['estado', 'creadaEn']) && (
+        (resource.data.para == request.auth.uid && resource.data.estado == 'pendiente'
+          && request.resource.data.estado in ['aceptada', 'rechazada'])
+        || (resource.data.de == request.auth.uid && resource.data.estado == 'rechazada'
+          && request.resource.data.estado == 'pendiente'));
+      allow delete: if false;
+    }
+
+    // Duelos (T-75): los ven sus dos jugadores. Las transiciones las define T-75.
+    match /duelos/{duelo} {
+      allow read: if conSesion()
+        && request.auth.uid in [resource.data.retador, resource.data.retado];
+      allow write: if false;
+    }
+
+    // Todo lo demás (puntajes, trofeos, rankings) queda cerrado hasta que su tarjeta lo abra.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

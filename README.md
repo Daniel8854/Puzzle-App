@@ -22,7 +22,7 @@ Las tareas se reparten en el tablero de Trello; cada tarjeta va en su rama `feat
 - Kotlin + Jetpack Compose (Material 3), arquitectura MVVM (pantalla → ViewModel con `StateFlow` → repositorio)
 - Navigation Compose
 - Room + DataStore (datos locales y modo sin conexión)
-- Firebase (plan Blaze): Authentication (correo y Google), Firestore, Storage, Cloud Messaging y Cloud Functions
+- Firebase en plan Spark, sin costo: Authentication (correo y Google) y Firestore (ver `docs/plan-spark.md`)
 - Pruebas unitarias con JUnit
 
 ## Estructura
@@ -33,7 +33,6 @@ app/         Android (MVVM)
   dominio/   Reglas y modelos de la app
   datos/     Repositorios (Room, DataStore y Firebase)
 motor/       Lógica pura del puzzle (sin Android), probada con JUnit
-functions/   Cloud Functions
 ```
 
 Regla MVVM del equipo: una pantalla nunca crea repositorios ni lanza corrutinas por su cuenta;

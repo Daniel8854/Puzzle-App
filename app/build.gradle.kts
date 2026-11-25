@@ -4,6 +4,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Firebase (T-13): el archivo google-services.json no se sube al repositorio.
+// Cada integrante lo pone en app/ (se comparte por un medio privado). Sin él la app compila,
+// pero las funciones en línea no funcionan.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "co.edu.univalle.puzzle"
     compileSdk {
@@ -68,12 +75,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
 
-    // Firebase (T-13): Auth, Firestore, Storage y Cloud Messaging
+    // Firebase (T-13): Authentication y Firestore. Plan Spark: sin Storage ni Cloud Functions
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
-    implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.play.services)
 
     // Inicio con Google (T-16)
