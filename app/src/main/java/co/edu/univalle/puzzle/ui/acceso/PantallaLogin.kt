@@ -1,6 +1,7 @@
 package co.edu.univalle.puzzle.ui.acceso
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +64,8 @@ fun ContenidoLogin(
     alIrARecuperar: () -> Unit,
     alJugarComoInvitado: () -> Unit,
     alContinuarConGoogle: (() -> Unit)?
-) {
+) = Box(Modifier.fillMaxSize()) {
+    DecoracionLogin()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,7 +76,9 @@ fun ContenidoLogin(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Puzzle", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+            LogoPuzzle()
+            Spacer(Modifier.height(10.dp))
+            Text("Puzzle", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text("Arma, compite y supera tus récords", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(8.dp))
@@ -93,8 +97,14 @@ fun ContenidoLogin(
         if (alContinuarConGoogle != null) {
             BotonSecundario("Continuar con Google", alContinuarConGoogle)
         }
-        BotonSecundario("Jugar como invitado", alJugarComoInvitado)
+        TextButton(
+            onClick = alJugarComoInvitado,
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Text("Jugar como invitado", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        }
 
+        Spacer(Modifier.height(24.dp))
         EnlaceInferior("¿No tienes cuenta?", "Regístrate", alIrARegistro)
     }
 }

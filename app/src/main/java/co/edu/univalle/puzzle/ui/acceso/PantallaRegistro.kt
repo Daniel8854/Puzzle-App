@@ -76,12 +76,12 @@ fun ContenidoRegistro(estado: EstadoRegistro, acciones: AccionesRegistro) {
 
         SelectorAvatar(estado.avatar, estado.nombre.trim().firstOrNull() ?: 'J', acciones.elegirAvatar)
 
-        CampoAcceso("Nombre de jugador", estado.nombre, acciones.cambiarNombre,
-            ayuda = "De 3 a 20 caracteres", error = estado.errorNombre)
+        CampoAcceso("Nombre de jugador", estado.nombre, acciones.cambiarNombre, "De 3 a 20 caracteres",
+            error = estado.errorNombre)
         CampoAcceso("Correo electrónico", estado.correo, acciones.cambiarCorreo, "tu@correo.com",
             error = estado.errorCorreo, teclado = KeyboardType.Email)
-        CampoAcceso("Contraseña", estado.contrasena, acciones.cambiarContrasena,
-            ayuda = "Mínimo 8 caracteres", error = estado.errorContrasena, esContrasena = true)
+        CampoAcceso("Contraseña", estado.contrasena, acciones.cambiarContrasena, "Mínimo 8 caracteres",
+            error = estado.errorContrasena, esContrasena = true)
         CampoAcceso("Confirmar contraseña", estado.confirmacion, acciones.cambiarConfirmacion,
             "Repite tu contraseña", error = estado.errorConfirmacion, esContrasena = true)
 

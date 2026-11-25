@@ -31,8 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -155,30 +160,77 @@ val ColoresAvatar = listOf(
     Color(0xFF2D8CFF), Color(0xFFEF6AA8), Color(0xFF7A5B3A), Color(0xFF3B3A4F)
 )
 
-/** Selector de avatar de la pantalla 02: círculos con la inicial del jugador. */
+/**
+ * Selector de avatar de la pantalla 02: un círculo punteado con la inicial del jugador.
+ * Cada toque pasa al siguiente avatar predefinido.
+ */
 @Composable
 fun SelectorAvatar(seleccionado: Int, inicial: Char, alElegir: (Int) -> Unit) {
-    Column {
-        Text("Elige un avatar", style = MaterialTheme.typography.labelLarge)
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ColoresAvatar.forEachIndexed { i, color ->
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                        .then(
-                            if (i == seleccionado) Modifier.border(3.dp, MaterialTheme.colorScheme.onBackground, CircleShape)
-                            else Modifier
-                        )
-                        .clickable(role = Role.RadioButton) { alElegir(i) }
-                ) {
-                    Text(inicial.uppercaseChar().toString(), color = Color.White, fontWeight = FontWeight.Bold)
+    val morado = MaterialTheme.colorScheme.primary
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier
+                .size(84.dp)
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClickLabel = "Cambiar avatar") {
+                    alElegir((seleccionado + 1) % ColoresAvatar.size)
                 }
+        ) {
+            Box(
+                Modifier
+                    .size(80.dp)
+                    .align(Alignment.Center)
+                    .drawBehind {
+                        drawCircle(
+                            color = morado,
+                            style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+                        )
+                    }
+                    .padding(8.dp)
+                    .clip(CircleShape)
+                    .background(ColoresAvatar[seleccionado])
+            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(26.dp)
+                    .align(Alignment.BottomEnd)
+                    .clip(CircleShape)
+                    .background(morado)
+            ) {
+                Text(inicial.uppercaseChar().toString(), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
+        Spacer(Modifier.height(4.dp))
+        Text("Elige un avatar", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Logo de la pantalla 01: cuatro piezas de colores. */
+@Composable
+fun LogoPuzzle() {
+    val pieza = Modifier.size(30.dp).clip(RoundedCornerShape(8.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Box(pieza.background(Color(0xFF6C4CF1)))
+            Box(pieza.background(Color(0xFFFFB020)))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Box(pieza.background(Color(0xFF3DD6B0)))
+            Box(pieza.rotate(12f).background(Color(0xFF8B6CF6)))
+        }
+    }
+}
+
+/** Círculos suaves de fondo de la pantalla 01. */
+@Composable
+fun DecoracionLogin(modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth().height(280.dp)) {
+        Box(Modifier.padding(start = 24.dp, top = 16.dp).size(170.dp).clip(CircleShape).background(Color(0xFFFBE9E2)))
+        Box(
+            Modifier.align(Alignment.TopEnd).padding(top = 72.dp).offset(x = 40.dp)
+                .size(240.dp).clip(CircleShape).background(Color(0xFFEDE8FE))
+        )
     }
 }
 
