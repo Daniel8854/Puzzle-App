@@ -1,0 +1,14 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "solicitudes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "para", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "creadaEn", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
