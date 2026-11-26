@@ -8,8 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PartidaTest {
-
-    /** Tablero a un movimiento de resolverse: la pieza 8 está en la posición 8. */
+    // Tablero a un movimiento de resolverse: la pieza 8 está en la posición 8.
     private val casiResuelto = Tablero.resuelto(3).mover(7)!!
 
     @Test

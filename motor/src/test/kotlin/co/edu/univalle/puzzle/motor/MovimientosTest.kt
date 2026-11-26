@@ -6,10 +6,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Criterio de aceptación de T-24: esquinas, bordes y centro probados. */
 class MovimientosTest {
-
-    /** Tablero 3×3 con la vacía en la posición [vacia] (las demás piezas da igual dónde). */
+    // Tablero 3×3 con la vacía en la posición indicada; las demás piezas dan igual.
     private fun tableroConVaciaEn(vacia: Int): Tablero {
         val casillas = (1..8).toMutableList()
         casillas.add(vacia, Tablero.VACIA)

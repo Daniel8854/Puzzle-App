@@ -20,7 +20,6 @@ import co.edu.univalle.puzzle.ui.pantallas.misfotos.PantallaMisFotos
 import co.edu.univalle.puzzle.ui.pantallas.modos.PantallaModos
 import co.edu.univalle.puzzle.ui.pantallas.partida.PantallaPartida
 
-/** Lleva a Inicio y borra las pantallas de acceso del historial. */
 fun NavHostController.irAInicio() = navigate(Rutas.INICIO) {
     popUpTo(Rutas.LOGIN) { inclusive = true }
 }
@@ -32,8 +31,7 @@ fun NavegacionPuzzle() {
     val crearCuenta: () -> Unit = { nav.navigate(Rutas.REGISTRO) }
 
     NavHost(navController = nav, startDestination = Rutas.LOGIN) {
-
-        // ---------- Acceso (T-15 conecta aquí las pantallas de T-19 y T-65) ----------
+        // Provisional hasta que T-15 conecte las pantallas de T-19.
         composable(Rutas.LOGIN) {
             PantallaAccesoProvisional(alEntrar = { nav.irAInicio() })
         }
@@ -41,7 +39,6 @@ fun NavegacionPuzzle() {
         composable(Rutas.RECUPERAR) { PantallaEnConstruccion("Recuperar contraseña", volver) }
         composable(Rutas.PRIVACIDAD) { PantallaEnConstruccion("Aviso de privacidad", volver) }
 
-        // ---------- Juego ----------
         composable(Rutas.INICIO) {
             PantallaInicio(alNavegar = { ruta -> nav.navigate(ruta) })
         }
@@ -70,7 +67,6 @@ fun NavegacionPuzzle() {
             )
         }
 
-        // ---------- Fotos ----------
         composable(Rutas.MIS_FOTOS) {
             PantallaMisFotos(
                 alAgregarFoto = { nav.navigate(Rutas.PERMISO_FOTOS) },
@@ -108,7 +104,6 @@ fun NavegacionPuzzle() {
             )
         }
 
-        // ---------- Secciones que requieren cuenta ----------
         composable(Rutas.AMIGOS) {
             SeccionProtegida("Amigos", crearCuenta, volver) {
                 PantallaAgregarAmigo(

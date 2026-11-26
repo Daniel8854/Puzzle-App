@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado de la pantalla 01 · Login (y 01b con error). */
 data class EstadoLogin(
     val correo: String = "",
     val contrasena: String = "",
@@ -26,7 +25,6 @@ data class EstadoLogin(
 }
 
 class LoginViewModel(private val servicio: ServicioCuenta) : ViewModel() {
-
     private val _estado = MutableStateFlow(EstadoLogin(entro = servicio.haySesion()))
     val estado: StateFlow<EstadoLogin> = _estado.asStateFlow()
 
@@ -40,7 +38,6 @@ class LoginViewModel(private val servicio: ServicioCuenta) : ViewModel() {
         ejecutar { servicio.iniciarSesion(actual.correo.trim(), actual.contrasena) }
     }
 
-    /** Lo llama la navegación cuando el selector de Google entrega el token (T-16). */
     fun entrarConGoogle(idToken: String) = ejecutar { servicio.iniciarConGoogle(idToken) }
 
     fun mostrarError(mensaje: String) = _estado.update { it.copy(error = mensaje, cargando = false) }

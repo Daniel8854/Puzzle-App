@@ -1,11 +1,7 @@
 package co.edu.univalle.puzzle.dominio.privacidad
 
-/**
- * Aviso de privacidad y autorización de tratamiento de datos (RNF-17, Ley 1581 de 2012).
- * Es el texto de la pantalla 31. Si cambia el texto, se sube [VERSION] para pedir de nuevo la aceptación.
- */
+// Si cambia el texto del aviso hay que subir VERSION para volver a pedir la aceptación.
 object AvisoPrivacidad {
-
     const val VERSION = "2026-11"
     const val LEY = "Ley 1581 de 2012"
 
@@ -30,19 +26,13 @@ object AvisoPrivacidad {
     const val AUTORIZACION =
         "Para registrarte debes aceptar este aviso. Sin aceptarlo no se crea la cuenta."
 
-    /** Registro de la aceptación que se guarda con la cuenta (quién aceptó qué versión y cuándo). */
     data class Consentimiento(val version: String, val aceptadoEnMillis: Long, val mayorDeEdad: Boolean)
 
-    /**
-     * Crea el consentimiento al registrarse. Lanza [IllegalArgumentException] si no se aceptó
-     * el aviso o no se declaró la mayoría de edad: sin eso no se puede crear la cuenta.
-     */
     fun consentir(aceptoAviso: Boolean, mayorDeEdad: Boolean, ahoraMillis: Long): Consentimiento {
         require(aceptoAviso) { "Debe aceptar el aviso de privacidad" }
         require(mayorDeEdad) { "Debe declarar que es mayor de edad" }
         return Consentimiento(VERSION, ahoraMillis, mayorDeEdad)
     }
 
-    /** Verdadero si el consentimiento guardado corresponde al aviso vigente. */
     fun estaVigente(consentimiento: Consentimiento?): Boolean = consentimiento?.version == VERSION
 }

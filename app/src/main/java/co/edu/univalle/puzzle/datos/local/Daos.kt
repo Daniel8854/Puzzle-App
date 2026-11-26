@@ -7,7 +7,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
-/** Todas las consultas filtran por cuenta: una cuenta nunca ve los datos de otra. */
+// Todas las consultas filtran por cuenta.
 @Dao
 interface ResultadoDao {
     @Insert

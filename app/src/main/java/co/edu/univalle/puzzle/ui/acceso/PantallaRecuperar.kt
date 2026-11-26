@@ -44,7 +44,6 @@ import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 private val VerdeExito = Color(0xFF1FA67A)
 private val FondoExito = Color(0xFFE6F7F0)
 
-/** Pantalla 21 · Recuperar contraseña (RF-04). */
 @Composable
 fun PantallaRecuperar(vm: RecuperarViewModel, alVolver: () -> Unit) {
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -142,7 +141,6 @@ fun ContenidoRecuperar(
     }
 }
 
-/** Candado del diseño 21, dibujado para no depender de una librería de íconos. */
 @Composable
 private fun Candado(color: Color) {
     Canvas(Modifier.size(width = 44.dp, height = 50.dp)) {

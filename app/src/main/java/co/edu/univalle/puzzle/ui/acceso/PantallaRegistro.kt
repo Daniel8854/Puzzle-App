@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/** Pantalla 02 · Registro (y 02b · Registro · Error). */
 @Composable
 fun PantallaRegistro(
     vm: RegistroViewModel,

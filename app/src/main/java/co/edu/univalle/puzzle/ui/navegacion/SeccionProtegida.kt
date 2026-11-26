@@ -35,10 +35,6 @@ import co.edu.univalle.puzzle.ui.acceso.BotonPrincipal
 import co.edu.univalle.puzzle.ui.acceso.EncabezadoAcceso
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/**
- * Envuelve las secciones que requieren cuenta: Amigos, Duelo VS y Ranking (T-17, RF-03).
- * Al invitado le muestra la pantalla 26 con la invitación a registrarse; con cuenta muestra [contenido].
- */
 @Composable
 fun SeccionProtegida(
     titulo: String,
@@ -54,7 +50,6 @@ fun SeccionProtegida(
     }
 }
 
-/** Subtítulo de cada sección bloqueada, como en el encabezado del diseño. */
 private fun subtituloDe(titulo: String) = when (titulo) {
     "Duelo VS" -> "Reta a un amigo al mismo puzzle"
     "Amigos" -> "Juega duelos con tus amigos"
@@ -62,7 +57,6 @@ private fun subtituloDe(titulo: String) = when (titulo) {
     else -> null
 }
 
-/** Pantalla 26 · Invitado · Función bloqueada. */
 @Composable
 fun FuncionBloqueada(titulo: String, alCrearCuenta: () -> Unit, alVolver: () -> Unit) {
     Column(

@@ -17,20 +17,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado de la pantalla 21 · Recuperar contraseña. */
 data class EstadoRecuperar(
     val correo: String = "",
     val error: String? = null,
     val cargando: Boolean = false,
     val enviado: Boolean = false,
-    /** Segundos que faltan para poder reenviar (RF-04: 60 s). */
     val segundosParaReenviar: Int = 0
 ) {
     val puedeReenviar: Boolean get() = enviado && segundosParaReenviar == 0 && !cargando
 }
 
 class RecuperarViewModel(private val servicio: ServicioCuenta) : ViewModel() {
-
     private val _estado = MutableStateFlow(EstadoRecuperar())
     val estado: StateFlow<EstadoRecuperar> = _estado.asStateFlow()
     private var cuentaRegresiva: Job? = null

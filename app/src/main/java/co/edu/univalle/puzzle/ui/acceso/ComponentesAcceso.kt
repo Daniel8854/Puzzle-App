@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 
 private val Redondeo = RoundedCornerShape(14.dp)
 
-/** Campo con etiqueta arriba, ayuda o error abajo (diseño de 01, 02 y 21). */
 @Composable
 fun CampoAcceso(
     etiqueta: String,
@@ -93,7 +92,6 @@ fun CampoAcceso(
     }
 }
 
-/** Botón morado de 52 dp de alto (RNF-20: mínimo 44). */
 @Composable
 fun BotonPrincipal(texto: String, habilitado: Boolean, cargando: Boolean = false, alPulsar: () -> Unit) {
     Button(
@@ -114,7 +112,6 @@ fun BotonSecundario(texto: String, alPulsar: () -> Unit) {
     }
 }
 
-/** Casilla con texto; el texto también marca la casilla. */
 @Composable
 fun CasillaAcceso(texto: String, marcada: Boolean, alCambiar: (Boolean) -> Unit, enlace: Pair<String, () -> Unit>? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -130,7 +127,6 @@ fun CasillaAcceso(texto: String, marcada: Boolean, alCambiar: (Boolean) -> Unit,
     }
 }
 
-/** Mensaje de error general en un recuadro rojo (01b). */
 @Composable
 fun AvisoError(mensaje: String) {
     Text(
@@ -145,7 +141,6 @@ fun AvisoError(mensaje: String) {
     )
 }
 
-/** Texto + enlace en una línea («¿No tienes cuenta? Regístrate»). */
 @Composable
 fun EnlaceInferior(pregunta: String, accion: String, alPulsar: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -154,16 +149,11 @@ fun EnlaceInferior(pregunta: String, accion: String, alPulsar: () -> Unit) {
     }
 }
 
-/** Colores de los avatares predefinidos (los dibujos llegan con el catálogo de T-71). */
 val ColoresAvatar = listOf(
     Color(0xFF6C4CF1), Color(0xFFE0384C), Color(0xFFFFB020), Color(0xFF1FA67A),
     Color(0xFF2D8CFF), Color(0xFFEF6AA8), Color(0xFF7A5B3A), Color(0xFF3B3A4F)
 )
 
-/**
- * Selector de avatar de la pantalla 02: un círculo punteado con la inicial del jugador.
- * Cada toque pasa al siguiente avatar predefinido.
- */
 @Composable
 fun SelectorAvatar(seleccionado: Int, inicial: Char, alElegir: (Int) -> Unit) {
     val morado = MaterialTheme.colorScheme.primary
@@ -206,7 +196,6 @@ fun SelectorAvatar(seleccionado: Int, inicial: Char, alElegir: (Int) -> Unit) {
     }
 }
 
-/** Logo de la pantalla 01: cuatro piezas de colores. */
 @Composable
 fun LogoPuzzle() {
     val pieza = Modifier.size(30.dp).clip(RoundedCornerShape(8.dp))
@@ -222,7 +211,6 @@ fun LogoPuzzle() {
     }
 }
 
-/** Círculos suaves de fondo de la pantalla 01. */
 @Composable
 fun DecoracionLogin(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().height(280.dp)) {
@@ -234,7 +222,6 @@ fun DecoracionLogin(modifier: Modifier = Modifier) {
     }
 }
 
-/** Encabezado con botón «←» de 44 dp y título (02 y 21). */
 @Composable
 fun EncabezadoAcceso(titulo: String, subtitulo: String?, alVolver: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {

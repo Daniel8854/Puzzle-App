@@ -39,13 +39,8 @@ import co.edu.univalle.puzzle.motor.Tablero
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 import kotlin.math.abs
 
-/** Dirección de un deslizamiento sobre el tablero. */
 enum class Direccion { ARRIBA, ABAJO, IZQUIERDA, DERECHA }
 
-/**
- * Posición de la pieza que se mueve al deslizar en [direccion] (RF-10): la que está al lado
- * opuesto de la casilla vacía. Devuelve `null` si no hay pieza en ese lado.
- */
 fun Tablero.piezaParaDeslizar(direccion: Direccion): Int? {
     val fila = filaDe(posicionVacia)
     val columna = columnaDe(posicionVacia)
@@ -58,13 +53,7 @@ fun Tablero.piezaParaDeslizar(direccion: Direccion): Int? {
     return if (f in 0 until tamano && c in 0 until tamano) indiceDe(f, c) else null
 }
 
-/**
- * Tablero del puzzle (RF-10): se juega tocando una pieza junto al hueco o deslizando el dedo.
- * Las piezas se deslizan con una animación corta (RNF-01). Si no hay [imagen], muestra números.
- *
- * [alMover] recibe la posición de la pieza que el jugador quiere mover; quien lo usa decide
- * si es legal (con `Tablero.mover`). Con [bloqueado] el tablero no responde (partida terminada).
- */
+// alMover entrega la posición tocada; si es legal lo decide Tablero.mover.
 @Composable
 fun TableroPuzzle(
     tablero: Tablero,
