@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import co.edu.univalle.puzzle.datos.cuenta.RespuestaGoogle
 import co.edu.univalle.puzzle.dominio.cuenta.DatosRegistro
 import co.edu.univalle.puzzle.dominio.cuenta.ErrorCuenta
 import co.edu.univalle.puzzle.dominio.cuenta.ResultadoCuenta
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** Estado de la pantalla 02 · Registro (y 02b con error). */
 data class EstadoRegistro(
     val avatar: Int = 0,
     val nombre: String = "",
@@ -32,10 +34,12 @@ data class EstadoRegistro(
     val cargando: Boolean = false,
     val registrado: Boolean = false
 ) {
+    /** El botón solo se activa con ambas casillas marcadas (RF-01, RNF-17). */
     val puedeCrear: Boolean get() = mayorDeEdad && aceptoPrivacidad && !cargando
 }
 
 class RegistroViewModel(private val servicio: ServicioCuenta) : ViewModel() {
+
     private val _estado = MutableStateFlow(EstadoRegistro())
     val estado: StateFlow<EstadoRegistro> = _estado.asStateFlow()
 
@@ -84,6 +88,38 @@ class RegistroViewModel(private val servicio: ServicioCuenta) : ViewModel() {
         }
     }
 
+    /** «Continuar con Google» desde el registro (T-16): la navegación decide si falta completar el perfil. */
+    fun entrarConGoogle(idToken: String) {
+        _estado.update { it.copy(cargando = true, errorGeneral = null) }
+        viewModelScope.launch {
+            val resultado = servicio.iniciarConGoogle(idToken)
+            _estado.update { actual ->
+                when (resultado) {
+                    ResultadoCuenta.Exito -> actual.copy(cargando = false, registrado = true)
+                    is ResultadoCuenta.Error -> actual.copy(cargando = false, errorGeneral = resultado.tipo.mensaje)
+                }
+            }
+        }
+    }
+
+    /** Error que llega del selector de Google (por ejemplo, sin cuentas en el teléfono). */
+    fun mostrarError(mensaje: String) = _estado.update { it.copy(errorGeneral = mensaje, cargando = false) }
+
+    /**
+     * T-16: la pantalla solo abre el selector de Google del sistema ([pedirToken]);
+     * la respuesta se maneja aquí, no en la interfaz (MVVM).
+     */
+    fun continuarConGoogle(pedirToken: suspend () -> RespuestaGoogle) {
+        viewModelScope.launch {
+            when (val r = pedirToken()) {
+                is RespuestaGoogle.Token -> entrarConGoogle(r.idToken)
+                RespuestaGoogle.Cancelado -> Unit
+                is RespuestaGoogle.Falla -> mostrarError(r.mensaje)
+            }
+        }
+    }
+
+    /** Coloca el error bajo el campo que corresponde (pantalla 02b). */
     private fun conError(e: EstadoRegistro, tipo: ErrorCuenta): EstadoRegistro = when (tipo) {
         ErrorCuenta.CORREO_EN_USO, ErrorCuenta.CORREO_INVALIDO -> e.copy(errorCorreo = tipo.mensaje)
         ErrorCuenta.NOMBRE_EN_USO -> e.copy(errorNombre = tipo.mensaje)
