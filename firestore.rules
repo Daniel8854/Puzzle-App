@@ -3,7 +3,7 @@ rules_version = '2';
 // Reglas de Firestore (T-14). Principios:
 // - Sin sesión (invitado) no se lee ni se escribe nada en la nube.
 // - Cada jugador solo lee y escribe sus datos privados (RNF-15).
-// - El proyecto usa el plan Spark: no hay Cloud Functions. Lo que la app escribe en
+// - El proyecto usa el plan Spark (sin costo): no hay Cloud Functions. Lo que la app escribe en
 //   nombre de otros (código de amigo, amistades, duelos) lo validan estas reglas campo por campo
 //   (RNF-16). Lo que no está permitido aquí se rechaza.
 service cloud.firestore {
@@ -27,7 +27,12 @@ service cloud.firestore {
         && request.resource.data.avatar is int
         // El nombre debe quedar reservado a su nombre en la misma operación (nombre único, RF-01).
         && getAfter(docEn('nombres/' + request.resource.data.nombreMinusculas)).data.uid == uid;
-      allow update: if esYo(uid) && soloCambia(['avatar']) && request.resource.data.avatar is int;
+      allow update: if esYo(uid) && (
+        (soloCambia(['avatar']) && request.resource.data.avatar is int)
+        // Código de amigo (T-51): se pone una sola vez y en la misma operación queda reservado
+        // a su nombre en «codigos/{codigo}».
+        || (!('codigo' in resource.data) && soloCambia(['codigo'])
+            && getAfter(docEn('codigos/' + request.resource.data.codigo)).data.uid == uid));
       allow delete: if false;
 
       // Datos privados: correo, consentimiento del aviso y preferencias.
@@ -52,10 +57,17 @@ service cloud.firestore {
       allow delete: if conSesion() && resource.data.uid == request.auth.uid;
     }
 
-    // Códigos de amigo: los asigna T-51.
+    // Códigos de amigo (T-51, RF-39). Cada código es un documento, así no se repiten: si ya existe,
+    // crearlo otra vez cuenta como modificarlo y se rechaza. Cada jugador reserva uno solo.
     match /codigos/{codigo} {
       allow read: if conSesion();
-      allow write: if false;
+      allow create: if conSesion()
+        && codigo.matches('^[A-HJ-NP-Z2-9]{8}$')
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && !('codigo' in get(docEn('usuarios/' + request.auth.uid)).data)
+        && getAfter(docEn('usuarios/' + request.auth.uid)).data.codigo == codigo;
+      allow update, delete: if false;
     }
 
     // Solicitudes de amistad (T-52, T-53). El id es «deUid_paraUid».
