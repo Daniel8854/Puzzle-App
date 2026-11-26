@@ -104,11 +104,56 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Duelos (T-75): los ven sus dos jugadores. Las transiciones las define T-75.
+    // Duelos (T-75). Estados: esperando → sala → en_curso → finalizado, o cancelado.
+    // Las transiciones que no están aquí se rechazan. El paso a «finalizado» con el ganador lo
+    // define la tarjeta que valida los resultados; por ahora ningún cliente puede hacerlo.
     match /duelos/{duelo} {
-      allow read: if conSesion()
-        && request.auth.uid in [resource.data.retador, resource.data.retado];
-      allow write: if false;
+      function jugadores() { return [resource.data.retador, resource.data.retado]; }
+      function pasa(de, a) {
+        return resource.data.estado == de && request.resource.data.estado == a;
+      }
+      function sinTocarDatos() {
+        return soloCambia(['estado', 'motivo', 'actualizadoEn'])
+          && request.resource.data.actualizadoEn == request.time;
+      }
+      // Pasó el tiempo de espera desde el último cambio (mismos tiempos que ReglasDuelo.kt).
+      function vencio(espera) {
+        return request.time > resource.data.actualizadoEn + espera;
+      }
+
+      allow read: if conSesion() && request.auth.uid in jugadores();
+
+      // Crear el desafío: solo a un amigo, con la dificultad y la semilla de la mezcla (RF-25).
+      allow create: if conSesion()
+        && request.resource.data.keys().hasOnly(
+             ['retador', 'retado', 'estado', 'dificultad', 'imagenId', 'semilla', 'creadoEn', 'actualizadoEn'])
+        && request.resource.data.retador == request.auth.uid
+        && request.resource.data.retado != request.auth.uid
+        && request.resource.data.estado == 'esperando'
+        && request.resource.data.dificultad in [3, 4, 5]
+        && request.resource.data.imagenId is string
+        && request.resource.data.semilla is int
+        && request.resource.data.creadoEn == request.time
+        && request.resource.data.actualizadoEn == request.time
+        && exists(docEn('usuarios/' + request.auth.uid + '/amigos/' + request.resource.data.retado));
+
+      allow update: if conSesion() && request.auth.uid in jugadores() && sinTocarDatos() && (
+        // El retado acepta y pasan a la sala.
+        (pasa('esperando', 'sala') && request.auth.uid == resource.data.retado)
+        // El retado rechaza o el retador cancela, cada uno con su motivo.
+        || ((pasa('esperando', 'cancelado') || pasa('sala', 'cancelado'))
+              && request.resource.data.motivo ==
+                 (request.auth.uid == resource.data.retado ? 'rechazado' : 'cancelado_por_retador'))
+        // Empieza la partida desde la sala.
+        || pasa('sala', 'en_curso')
+        // Cualquiera de los dos cancela el desafío sin respuesta en 2 minutos
+        // o la sala que no empezó en 30 segundos.
+        || (pasa('esperando', 'cancelado') && request.resource.data.motivo == 'sin_respuesta'
+              && vencio(duration.value(2, 'm')))
+        || (pasa('sala', 'cancelado') && request.resource.data.motivo == 'sala_vencida'
+              && vencio(duration.value(30, 's')))
+      );
+      allow delete: if false;
     }
 
     // Todo lo demás (puntajes, trofeos, rankings) queda cerrado hasta que su tarjeta lo abra.
