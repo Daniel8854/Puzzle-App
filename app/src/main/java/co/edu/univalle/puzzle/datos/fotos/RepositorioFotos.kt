@@ -26,6 +26,25 @@ interface AlmacenFotos {
 
     /** Comprime la foto de [origen] (una Uri en texto) y la guarda. Devuelve el id de la foto. */
     suspend fun guardar(origen: String): Long
+
+    /** Foto de la cuenta actual con ese id, o null si no existe. */
+    suspend fun porId(id: Long): FotoPropia?
+
+    /** Lee la foto guardada para mostrarla. */
+    suspend fun cargarImagen(foto: FotoPropia): Bitmap?
+
+    /** Gira y voltea la foto, corta el [recorte] cuadrado y lo guarda junto con la [cuadricula] (RF-35). */
+    suspend fun guardarRecorte(foto: FotoPropia, rotacion: Int, volteada: Boolean, recorte: Rect, cuadricula: Int)
+}
+
+/** Gira [rotacion] grados y voltea en espejo. La usan la vista previa y el recorte final. */
+fun transformarFoto(original: Bitmap, rotacion: Int, volteada: Boolean): Bitmap {
+    if (rotacion == 0 && !volteada) return original
+    val matriz = Matrix().apply {
+        if (volteada) postScale(-1f, 1f)
+        postRotate(rotacion.toFloat())
+    }
+    return Bitmap.createBitmap(original, 0, 0, original.width, original.height, matriz, true)
 }
 
 /**
@@ -39,7 +58,22 @@ class RepositorioFotos(context: Context) : AlmacenFotos {
 
     fun deLaCuenta(cuentaId: String = SesionLocal.cuentaId.value): Flow<List<FotoPropia>> = dao.deCuenta(cuentaId)
 
-    suspend fun porId(id: Long, cuentaId: String = SesionLocal.cuentaId.value): FotoPropia? = dao.porId(id, cuentaId)
+    override suspend fun porId(id: Long): FotoPropia? = dao.porId(id, SesionLocal.cuentaId.value)
+
+    override suspend fun cargarImagen(foto: FotoPropia): Bitmap? =
+        withContext(Dispatchers.IO) { BitmapFactory.decodeFile(foto.rutaLocal) }
+
+    override suspend fun guardarRecorte(foto: FotoPropia, rotacion: Int, volteada: Boolean, recorte: Rect, cuadricula: Int) {
+        val ruta = withContext(Dispatchers.IO) {
+            val original = BitmapFactory.decodeFile(foto.rutaLocal) ?: error("No se pudo abrir la foto")
+            val imagen = transformarFoto(original, rotacion, volteada)
+            val cuadro = Bitmap.createBitmap(imagen, recorte.izquierda, recorte.arriba, recorte.lado, recorte.lado)
+            val archivo = File(foto.rutaLocal.removeSuffix(".jpg") + "_recorte.jpg")
+            archivo.outputStream().use { cuadro.compress(Bitmap.CompressFormat.JPEG, 85, it) }
+            archivo.absolutePath
+        }
+        dao.actualizar(foto.copy(rutaRecorte = ruta, cuadricula = cuadricula))
+    }
 
     /** Archivo temporal y su Uri para que la cámara guarde la foto (FileProvider de T-11). */
     override fun nuevoArchivoCamara(): Uri {
