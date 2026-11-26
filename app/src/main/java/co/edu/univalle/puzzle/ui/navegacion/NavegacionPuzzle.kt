@@ -112,7 +112,9 @@ fun NavegacionPuzzle() {
                 alVolver = volver,
                 alJugar = { modo, dificultad, imagenId ->
                     nav.navigate(Rutas.partida(modo, dificultad, imagenId))
-                }
+                },
+                alDesafiar = { nav.navigate(Rutas.DUELO) },
+                alMisFotos = { nav.navigate(Rutas.MIS_FOTOS) }
             )
         }
         composable(
