@@ -5,7 +5,7 @@ const path = require('node:path');
 const {
   initializeTestEnvironment, assertFails, assertSucceeds,
 } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, writeBatch, serverTimestamp } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, writeBatch, serverTimestamp, Timestamp } = require('firebase/firestore');
 
 let entorno;
 const raiz = path.join(__dirname, '..');
@@ -165,4 +165,85 @@ test('no se crea una amistad sin solicitud aceptada ni la crea un tercero', asyn
   await assertFails(aceptar(bob(), 'rechazada'));
   await assertFails(aceptar(alicia()));
   await assertFails(setDoc(doc(carlos(), 'usuarios/bob/amigos/alicia'), { nombre: 'X', avatar: 0, desde: serverTimestamp() }));
+});
+
+// ---------- Duelos (T-75) ----------
+
+async function hacerAmigos() {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'usuarios/alicia/amigos/bob'), { nombre: 'Bob' });
+    await setDoc(doc(db, 'usuarios/bob/amigos/alicia'), { nombre: 'Alicia' });
+  });
+}
+
+function desafio(db, retado = 'bob') {
+  return setDoc(doc(db, 'duelos/d1'), {
+    retador: 'alicia', retado, estado: 'esperando', dificultad: 4, imagenId: 'img1', semilla: 12345,
+    creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+  });
+}
+
+const pasarA = (db, estado, motivo) => updateDoc(doc(db, 'duelos/d1'),
+  motivo ? { estado, motivo, actualizadoEn: serverTimestamp() } : { estado, actualizadoEn: serverTimestamp() });
+
+/** Duelo guardado hace [hace] milisegundos en el [estado] indicado. */
+function dueloAntiguo(estado, hace) {
+  return entorno.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'duelos/d1'), {
+    retador: 'alicia', retado: 'bob', estado, dificultad: 4, imagenId: 'img1', semilla: 12345,
+    creadoEn: Timestamp.fromMillis(Date.now() - hace), actualizadoEn: Timestamp.fromMillis(Date.now() - hace),
+  }));
+}
+
+test('solo se reta a un amigo y el desafío empieza esperando', async () => {
+  await assertFails(desafio(alicia()));
+  await hacerAmigos();
+  await assertSucceeds(desafio(alicia()));
+  await assertSucceeds(getDoc(doc(bob(), 'duelos/d1')));
+  await assertFails(getDoc(doc(carlos(), 'duelos/d1')));
+});
+
+test('camino normal: el retado acepta y la partida empieza', async () => {
+  await hacerAmigos();
+  await desafio(alicia());
+  await assertFails(pasarA(alicia(), 'sala'));
+  await assertSucceeds(pasarA(bob(), 'sala'));
+  await assertSucceeds(pasarA(alicia(), 'en_curso'));
+});
+
+test('el retado rechaza y el retador cancela con su motivo', async () => {
+  await hacerAmigos();
+  await desafio(alicia());
+  await assertFails(pasarA(bob(), 'cancelado', 'cancelado_por_retador'));
+  await assertSucceeds(pasarA(bob(), 'cancelado', 'rechazado'));
+});
+
+test('el cliente no salta pasos, no finaliza ni cambia datos del duelo (SRS 4.5)', async () => {
+  await hacerAmigos();
+  await desafio(alicia());
+  await assertFails(pasarA(bob(), 'en_curso'));
+  await assertFails(pasarA(bob(), 'finalizado', 'victoria'));
+  await assertFails(updateDoc(doc(bob(), 'duelos/d1'), { semilla: 1, actualizadoEn: serverTimestamp() }));
+  await pasarA(bob(), 'sala');
+  await pasarA(alicia(), 'en_curso');
+  await assertFails(pasarA(alicia(), 'finalizado', 'victoria'));
+  await assertFails(pasarA(alicia(), 'cancelado', 'cancelado_por_retador'));
+  await assertFails(pasarA(alicia(), 'esperando'));
+});
+
+test('un desafío sin respuesta se cancela solo después de 2 minutos', async () => {
+  await hacerAmigos();
+  await desafio(alicia());
+  await assertFails(pasarA(alicia(), 'cancelado', 'sin_respuesta'));
+  await dueloAntiguo('esperando', 3 * 60_000);
+  await assertSucceeds(pasarA(alicia(), 'cancelado', 'sin_respuesta'));
+});
+
+test('una sala que no empieza se cancela solo después de 30 segundos', async () => {
+  await dueloAntiguo('sala', 10_000);
+  await assertFails(pasarA(bob(), 'cancelado', 'sala_vencida'));
+  await dueloAntiguo('sala', 40_000);
+  await assertSucceeds(pasarA(bob(), 'cancelado', 'sala_vencida'));
+  await dueloAntiguo('en_curso', 10 * 60_000);
+  await assertFails(pasarA(bob(), 'cancelado', 'sala_vencida'));
 });
