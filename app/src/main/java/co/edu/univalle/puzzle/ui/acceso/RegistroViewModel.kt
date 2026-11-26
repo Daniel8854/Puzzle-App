@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado de la pantalla 02 · Registro (y 02b con error). */
 data class EstadoRegistro(
     val avatar: Int = 0,
     val nombre: String = "",
@@ -33,12 +32,10 @@ data class EstadoRegistro(
     val cargando: Boolean = false,
     val registrado: Boolean = false
 ) {
-    /** El botón solo se activa con ambas casillas marcadas (RF-01, RNF-17). */
     val puedeCrear: Boolean get() = mayorDeEdad && aceptoPrivacidad && !cargando
 }
 
 class RegistroViewModel(private val servicio: ServicioCuenta) : ViewModel() {
-
     private val _estado = MutableStateFlow(EstadoRegistro())
     val estado: StateFlow<EstadoRegistro> = _estado.asStateFlow()
 
@@ -87,7 +84,6 @@ class RegistroViewModel(private val servicio: ServicioCuenta) : ViewModel() {
         }
     }
 
-    /** Coloca el error bajo el campo que corresponde (pantalla 02b). */
     private fun conError(e: EstadoRegistro, tipo: ErrorCuenta): EstadoRegistro = when (tipo) {
         ErrorCuenta.CORREO_EN_USO, ErrorCuenta.CORREO_INVALIDO -> e.copy(errorCorreo = tipo.mensaje)
         ErrorCuenta.NOMBRE_EN_USO -> e.copy(errorNombre = tipo.mensaje)

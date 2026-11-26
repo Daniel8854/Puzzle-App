@@ -4,7 +4,6 @@ import co.edu.univalle.puzzle.dominio.cuenta.DatosRegistro
 import co.edu.univalle.puzzle.dominio.cuenta.ResultadoCuenta
 import co.edu.univalle.puzzle.dominio.cuenta.ServicioCuenta
 
-/** Servicio de cuenta en memoria para probar los ViewModels sin Firebase. */
 class ServicioCuentaFalso(
     var respuesta: ResultadoCuenta = ResultadoCuenta.Exito,
     private val sesionIniciada: Boolean = false

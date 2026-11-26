@@ -1,11 +1,6 @@
 package co.edu.univalle.puzzle.dominio.cuenta
 
-/**
- * Reglas de los formularios de acceso (RF-01, RF-02, RF-04).
- * Cada función devuelve el mensaje de error que se muestra bajo el campo, o `null` si está bien.
- */
 object ValidacionCuenta {
-
     const val NOMBRE_MIN = 3
     const val NOMBRE_MAX = 20
     const val CONTRASENA_MIN = 8
@@ -32,7 +27,7 @@ object ValidacionCuenta {
     fun confirmacion(contrasena: String, confirmacion: String): String? =
         if (contrasena == confirmacion) null else "Las contraseñas no coinciden"
 
-    /** En el login solo se revisa que los campos no estén vacíos (RF-02 no dice cuál falló). */
+    // En el login solo se revisa que los campos no estén vacíos.
     fun loginCompleto(correo: String, contrasena: String): Boolean =
         correo.isNotBlank() && contrasena.isNotEmpty()
 }

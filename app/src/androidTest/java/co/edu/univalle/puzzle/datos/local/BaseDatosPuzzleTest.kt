@@ -12,10 +12,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Se ejecuta en un teléfono o emulador: Android Studio → clic derecho → Run. */
 @RunWith(AndroidJUnit4::class)
 class BaseDatosPuzzleTest {
-
     private lateinit var bd: BaseDatosPuzzle
 
     @Before fun crear() {

@@ -53,11 +53,6 @@ private val BotonOscuro = Color(0xFF2A2935)
 private val TextoTenue = Color(0xFFB4B2C4)
 private val Naranja = Color(0xFFFFB020)
 
-/**
- * Pantalla 23 · Recortar foto (RF-35): el puzzle siempre es cuadrado. Se mueve con un dedo,
- * se acerca con dos y se cambia la cuadrícula 3×3, 4×4 o 5×5, que se dibuja sobre la foto.
- * La pantalla solo dibuja y mueve el marco; cargar y guardar lo hace [RecortarViewModel].
- */
 @Composable
 fun PantallaRecortar(
     fotoId: Long,
@@ -156,7 +151,6 @@ private fun BotonHerramienta(icono: String, texto: String, alPulsar: () -> Unit)
     }
 }
 
-/** Muestra la parte de la foto que queda dentro del marco, la cuadrícula de cortes y las esquinas. */
 @Composable
 private fun VisorRecorte(imagen: Bitmap, marco: MarcoRecorte, cuadricula: Int, alCambiar: (MarcoRecorte) -> Unit) {
     val bitmap = remember(imagen) { imagen.asImageBitmap() }
@@ -187,7 +181,6 @@ private fun VisorRecorte(imagen: Bitmap, marco: MarcoRecorte, cuadricula: Int, a
             drawLine(linea, Offset(paso * i, 0f), Offset(paso * i, size.height), strokeWidth = 1.dp.toPx())
             drawLine(linea, Offset(0f, paso * i), Offset(size.width, paso * i), strokeWidth = 1.dp.toPx())
         }
-        // Esquinas del marco
         val largo = 22.dp.toPx()
         val grosor = 3.dp.toPx()
         val w = size.width

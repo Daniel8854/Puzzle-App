@@ -2,12 +2,9 @@ package co.edu.univalle.puzzle.motor
 
 import kotlin.random.Random
 
-/**
- * Mezcla del tablero (RF-09): parte del tablero resuelto y aplica movimientos válidos al azar,
- * así siempre tiene solución. Con la misma semilla sale siempre la misma mezcla (RF-25: duelos).
- */
+// Parte del tablero resuelto y aplica movimientos válidos, así siempre tiene solución.
+// La misma semilla da siempre la misma mezcla (los duelos lo necesitan).
 object Mezcla {
-
     const val MOVIMIENTOS_MINIMOS = 50
 
     fun mezclar(tamano: Int, semilla: Long, movimientos: Int = MOVIMIENTOS_MINIMOS * tamano): Tablero {
@@ -29,7 +26,7 @@ object Mezcla {
 
     fun mezclar(dificultad: Dificultad, semilla: Long): Tablero = mezclar(dificultad.tamano, semilla)
 
-    /** Verdadero si el tablero se puede resolver (paridad de inversiones). */
+    // Paridad de inversiones.
     fun tieneSolucion(tablero: Tablero): Boolean {
         val piezas = tablero.comoLista().filter { it != Tablero.VACIA }
         var inversiones = 0

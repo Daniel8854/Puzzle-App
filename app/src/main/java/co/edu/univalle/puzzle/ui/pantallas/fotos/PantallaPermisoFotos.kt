@@ -49,11 +49,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import co.edu.univalle.puzzle.ui.pantallas.BarraSuperior
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/**
- * Pantalla previa al permiso de cámara (RF-33). Explica para qué se usan la cámara y la galería
- * antes de que aparezca el aviso del sistema. Si el jugador lo niega, la app no se cierra:
- * muestra un mensaje y la opción de abrir los ajustes.
- */
 @Composable
 fun PantallaPermisoFotos(alConcedido: () -> Unit, alVolver: () -> Unit) {
     val context = LocalContext.current

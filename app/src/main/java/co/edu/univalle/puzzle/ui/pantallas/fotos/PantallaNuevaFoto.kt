@@ -38,10 +38,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.univalle.puzzle.ui.pantallas.BarraSuperior
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/**
- * Elegir una foto de la galería o tomarla con la cámara (RF-34). La pantalla solo abre la galería
- * o la cámara; comprimir y guardar lo hace [NuevaFotoViewModel].
- */
 @Composable
 fun PantallaNuevaFoto(
     alFotoGuardada: (fotoId: Long) -> Unit,

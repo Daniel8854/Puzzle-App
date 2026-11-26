@@ -16,26 +16,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/** Lo que muestra la pantalla de partida en cada momento. */
 data class EstadoPartida(
     val partida: Partida,
-    /** Segundos jugados (Clásico) o que quedan (Contrarreloj). */
     val segundosVisibles: Long
 )
 
-/**
- * Lleva la partida en la pantalla (RF-11, RF-12, RF-13): actualiza el reloj cada segundo,
- * aplica los movimientos y avisa una sola vez cuando termina con [alTerminar].
- */
 class PartidaViewModel(
     tablero: Tablero,
     limiteMs: Long?,
     private val reloj: () -> Long = System::currentTimeMillis,
     private val alTerminar: (ResultadoPartida) -> Unit = {},
-    /** Dónde corre el reloj; en las pruebas se pasa uno que se cancela solo. */
     escopoReloj: CoroutineScope? = null
 ) : ViewModel() {
-
     private val _estado = MutableStateFlow(armar(Partida.nueva(tablero, reloj(), limiteMs)))
     val estado: StateFlow<EstadoPartida> = _estado.asStateFlow()
     private var avisado = false
@@ -80,5 +72,4 @@ class PartidaViewModel(
     }
 }
 
-/** Formato m:ss del cronómetro. */
 fun formatoReloj(segundos: Long): String = "%d:%02d".format(segundos / 60, segundos % 60)

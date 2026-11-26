@@ -2,7 +2,6 @@ package co.edu.univalle.puzzle.ui.tema
 
 import androidx.compose.ui.graphics.Color
 
-// Colores del diseño de Figma
 val Morado = Color(0xFF6C4CF1)
 val MoradoClaro = Color(0xFFEDE8FE)
 val RojoError = Color(0xFFE0384C)

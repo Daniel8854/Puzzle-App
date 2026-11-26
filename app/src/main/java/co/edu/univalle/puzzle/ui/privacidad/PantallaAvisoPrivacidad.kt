@@ -36,10 +36,6 @@ import co.edu.univalle.puzzle.dominio.privacidad.AvisoPrivacidad
 import co.edu.univalle.puzzle.ui.tema.AmarilloPista
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/**
- * Pantalla 31 · Aviso de privacidad (RNF-17).
- * Se abre desde el registro («Ver») y, en el Sprint 2, desde Configuración.
- */
 @Composable
 fun PantallaAvisoPrivacidad(alEntendido: () -> Unit, alVolver: () -> Unit) {
     Column(

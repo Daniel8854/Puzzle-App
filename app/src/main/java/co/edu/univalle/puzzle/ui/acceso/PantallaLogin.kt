@@ -27,10 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/**
- * Pantalla 01 · Login (y 01b · Login · Error).
- * [alContinuarConGoogle] es opcional: el botón aparece cuando T-16 lo conecta.
- */
 @Composable
 fun PantallaLogin(
     vm: LoginViewModel,

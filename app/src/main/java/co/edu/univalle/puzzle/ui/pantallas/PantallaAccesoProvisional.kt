@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** Acceso provisional mientras T-15 conecta las pantallas de login de T-19. */
+// Provisional hasta que T-15 conecte el login de T-19.
 @Composable
 fun PantallaAccesoProvisional(alEntrar: () -> Unit) {
     Column(

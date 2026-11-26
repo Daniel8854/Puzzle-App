@@ -6,9 +6,7 @@ import co.edu.univalle.puzzle.datos.fotos.AlmacenFotos
 import co.edu.univalle.puzzle.datos.fotos.Rect
 import co.edu.univalle.puzzle.datos.local.FotoPropia
 
-/** Almacén de fotos en memoria para probar los ViewModels sin teléfono ni base de datos. */
 class AlmacenFotosFalso(var falla: Boolean = false, private val foto: FotoPropia? = null) : AlmacenFotos {
-    /** Un recorte guardado, para revisar qué mandó el ViewModel. */
     data class Recorte(val rotacion: Int, val volteada: Boolean, val recorte: Rect, val cuadricula: Int)
 
     val guardadas = mutableListOf<String>()
@@ -24,7 +22,6 @@ class AlmacenFotosFalso(var falla: Boolean = false, private val foto: FotoPropia
 
     override suspend fun porId(id: Long): FotoPropia? = foto?.takeIf { it.id == id }
 
-    /** En las pruebas no hay imágenes reales. */
     override suspend fun cargarImagen(foto: FotoPropia): Bitmap? = null
 
     override suspend fun guardarRecorte(foto: FotoPropia, rotacion: Int, volteada: Boolean, recorte: Rect, cuadricula: Int) {

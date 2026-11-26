@@ -16,28 +16,18 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 
-/**
- * Lo que necesitan los ViewModels de fotos. Es una interfaz para poder probarlos con datos falsos,
- * sin teléfono ni base de datos.
- */
 interface AlmacenFotos {
-    /** Archivo temporal y su Uri para que la cámara guarde la foto. */
     fun nuevoArchivoCamara(): Uri
 
-    /** Comprime la foto de [origen] (una Uri en texto) y la guarda. Devuelve el id de la foto. */
     suspend fun guardar(origen: String): Long
 
-    /** Foto de la cuenta actual con ese id, o null si no existe. */
     suspend fun porId(id: Long): FotoPropia?
 
-    /** Lee la foto guardada para mostrarla. */
     suspend fun cargarImagen(foto: FotoPropia): Bitmap?
 
-    /** Gira y voltea la foto, corta el [recorte] cuadrado y lo guarda junto con la [cuadricula] (RF-35). */
     suspend fun guardarRecorte(foto: FotoPropia, rotacion: Int, volteada: Boolean, recorte: Rect, cuadricula: Int)
 }
 
-/** Gira [rotacion] grados y voltea en espejo. La usan la vista previa y el recorte final. */
 fun transformarFoto(original: Bitmap, rotacion: Int, volteada: Boolean): Bitmap {
     if (rotacion == 0 && !volteada) return original
     val matriz = Matrix().apply {
@@ -47,12 +37,7 @@ fun transformarFoto(original: Bitmap, rotacion: Int, volteada: Boolean): Bitmap 
     return Bitmap.createBitmap(original, 0, 0, original.width, original.height, matriz, true)
 }
 
-/**
- * Fotos propias del jugador (RF-34): las comprime (RNF-05) y guarda una copia local para jugar
- * sin conexión (RNF-08). Cada cuenta tiene su carpeta y sus registros.
- */
 class RepositorioFotos(context: Context) : AlmacenFotos {
-
     private val app = context.applicationContext
     private val dao = BaseDatosPuzzle.obtener(app).fotos()
 
@@ -75,7 +60,6 @@ class RepositorioFotos(context: Context) : AlmacenFotos {
         dao.actualizar(foto.copy(rutaRecorte = ruta, cuadricula = cuadricula))
     }
 
-    /** Archivo temporal y su Uri para que la cámara guarde la foto (FileProvider de T-11). */
     override fun nuevoArchivoCamara(): Uri {
         val carpeta = File(app.cacheDir, "camara").apply { mkdirs() }
         val archivo = File(carpeta, "foto_${System.currentTimeMillis()}.jpg")
@@ -84,7 +68,6 @@ class RepositorioFotos(context: Context) : AlmacenFotos {
 
     override suspend fun guardar(origen: String): Long = guardar(Uri.parse(origen))
 
-    /** Comprime la foto de [origen] y la guarda. Devuelve el id de la foto guardada. */
     suspend fun guardar(origen: Uri, cuentaId: String = SesionLocal.cuentaId.value): Long =
         withContext(Dispatchers.IO) {
             val bytes = comprimir(origen)
@@ -96,7 +79,6 @@ class RepositorioFotos(context: Context) : AlmacenFotos {
 
     suspend fun actualizar(foto: FotoPropia) = dao.actualizar(foto)
 
-    /** Lee, endereza según EXIF, reduce a 1080 px y baja la calidad hasta 500 KB o menos. */
     private fun comprimir(origen: Uri): ByteArray {
         val resolver = app.contentResolver
         val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }

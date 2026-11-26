@@ -9,7 +9,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Configuración del jugador (RF-49). Cada cuenta tiene la suya. */
 data class Preferencias(
     val sonidos: Boolean = true,
     val vibracion: Boolean = true,
@@ -20,13 +19,12 @@ data class Preferencias(
     val notifResultados: Boolean = true
 )
 
-/** Cada opción se guarda con el id de la cuenta delante: «uid.sonidos». */
+// Cada opción se guarda con el id de la cuenta delante: «uid.sonidos».
 enum class Opcion { SONIDOS, VIBRACION, FLECHAS_AYUDA, NUMEROS_EN_PIEZAS, NOTIF_DESAFIOS, NOTIF_SOLICITUDES, NOTIF_RESULTADOS;
 
     fun clave(cuentaId: String) = booleanPreferencesKey("$cuentaId.${name.lowercase()}")
 }
 
-/** Arma las preferencias de una cuenta a partir de lo guardado (lo que falta toma el valor por defecto). */
 fun leerPreferencias(guardado: Preferences, cuentaId: String): Preferencias {
     val porDefecto = Preferencias()
     fun valor(opcion: Opcion, defecto: Boolean) = guardado[opcion.clave(cuentaId)] ?: defecto
@@ -43,7 +41,6 @@ fun leerPreferencias(guardado: Preferences, cuentaId: String): Preferencias {
 
 private val Context.almacen: DataStore<Preferences> by preferencesDataStore(name = "preferencias")
 
-/** Guarda y lee la configuración con DataStore; se conserva al cerrar y abrir la app (RNF-08). */
 class RepositorioPreferencias(context: Context) {
     private val almacen = context.applicationContext.almacen
 

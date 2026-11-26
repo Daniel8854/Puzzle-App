@@ -4,8 +4,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// Firebase (T-13): el archivo google-services.json no se sube al repositorio.
-// Cada integrante lo pone en app/ (se comparte por un medio privado). Sin él la app compila,
+// google-services.json no se sube al repositorio: cada integrante lo pone en app/. Sin él la app compila,
 // pero las funciones en línea no funcionan.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
@@ -19,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "co.edu.univalle.puzzle"
-        // Android 9 (RNF-07)
+        // Android 9
         minSdk = 28
         targetSdk = 37
         versionCode = 1
@@ -69,24 +68,24 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
 
-    // Datos locales (T-12)
+    // Datos locales
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
 
-    // Firebase (T-13): Authentication y Firestore. Plan Spark: sin Storage ni Cloud Functions
+    // Firebase: Authentication y Firestore
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
 
-    // Inicio con Google (T-16)
+    // Inicio con Google
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
 
-    // Imágenes y fotos (T-46, T-71)
+    // Imágenes y fotos
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.exifinterface)

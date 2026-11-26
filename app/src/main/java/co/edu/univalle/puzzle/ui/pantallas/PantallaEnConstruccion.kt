@@ -17,7 +17,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import co.edu.univalle.puzzle.ui.tema.PuzzleTheme
 
-/** Barra superior común con título y botón para volver. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarraSuperior(titulo: String, alVolver: () -> Unit) {
@@ -29,7 +28,6 @@ fun BarraSuperior(titulo: String, alVolver: () -> Unit) {
     )
 }
 
-/** Pantalla provisional para las secciones que aún no se implementan. */
 @Composable
 fun PantallaEnConstruccion(titulo: String, alVolver: () -> Unit) {
     Scaffold(topBar = { BarraSuperior(titulo, alVolver) }) { relleno ->

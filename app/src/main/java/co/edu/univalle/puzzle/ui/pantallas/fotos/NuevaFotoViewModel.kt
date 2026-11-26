@@ -15,23 +15,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado de la pantalla Nueva foto. Cuando [fotoGuardada] deja de ser null se pasa a Recortar. */
 data class EstadoNuevaFoto(
     val guardando: Boolean = false,
     val error: String? = null,
     val fotoGuardada: Long? = null
 )
 
-/** Nueva foto (RF-34): recibe la foto elegida o tomada, la manda a comprimir y guardar. */
 class NuevaFotoViewModel(private val almacen: AlmacenFotos) : ViewModel() {
-
     private val _estado = MutableStateFlow(EstadoNuevaFoto())
     val estado: StateFlow<EstadoNuevaFoto> = _estado.asStateFlow()
 
-    /** Uri donde la cámara guarda la foto. */
     fun nuevoArchivoCamara(): Uri = almacen.nuevoArchivoCamara()
 
-    /** Foto elegida de la galería o tomada con la cámara (en texto). Si es null, el usuario canceló. */
     fun fotoElegida(origen: String?) {
         if (origen == null || _estado.value.guardando) return
         _estado.value = EstadoNuevaFoto(guardando = true)
@@ -42,7 +37,6 @@ class NuevaFotoViewModel(private val almacen: AlmacenFotos) : ViewModel() {
         }
     }
 
-    /** La pantalla ya navegó a Recortar: se limpia para no volver a navegar al regresar. */
     fun navegacionHecha() = _estado.update { it.copy(fotoGuardada = null) }
 
     companion object {

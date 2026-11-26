@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado de la pantalla Recortar. El marco (lo que se arrastra con el dedo) vive en la pantalla. */
 data class EstadoRecortar(
     val cargando: Boolean = true,
     val foto: FotoPropia? = null,
@@ -30,9 +29,7 @@ data class EstadoRecortar(
     val listo: Boolean = false
 )
 
-/** Recortar la foto en cuadrado (RF-35): rotar, voltear, elegir cuadrícula y guardar el recorte. */
 class RecortarViewModel(private val fotoId: Long, private val almacen: AlmacenFotos) : ViewModel() {
-
     private val _estado = MutableStateFlow(EstadoRecortar())
     val estado: StateFlow<EstadoRecortar> = _estado.asStateFlow()
 
@@ -58,7 +55,6 @@ class RecortarViewModel(private val fotoId: Long, private val almacen: AlmacenFo
         if (n in 3..5) _estado.update { it.copy(cuadricula = n) }
     }
 
-    /** Guarda el [recorte] que marcó el jugador sobre la foto ya girada y volteada. */
     fun guardar(recorte: Rect) {
         val e = _estado.value
         val foto = e.foto ?: return
