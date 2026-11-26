@@ -2,7 +2,11 @@ package co.edu.univalle.puzzle.ui.navegacion
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.edu.univalle.puzzle.notificaciones.PedirPermisoNotificaciones
 import co.edu.univalle.puzzle.datos.cuenta.SelectorGoogle
 import co.edu.univalle.puzzle.ui.acceso.CompletarPerfilViewModel
 import co.edu.univalle.puzzle.ui.acceso.PantallaCompletarPerfil
@@ -41,7 +45,11 @@ fun NavHostController.irAInicio() = navigate(Rutas.INICIO) {
 }
 
 @Composable
-fun NavegacionPuzzle() {
+/**
+ * [rutaPendiente] es la pantalla que pidió abrir una notificación (T-62): se abre al llegar a Inicio
+ * con la sesión iniciada, y luego se avisa con [alAbrirRuta].
+ */
+fun NavegacionPuzzle(rutaPendiente: String? = null, alAbrirRuta: () -> Unit = {}) {
     val nav = rememberNavController()
     val context = LocalContext.current
     val cuenta = remember { ServicioCuentaFirebase(context.applicationContext) }
@@ -105,6 +113,16 @@ fun NavegacionPuzzle() {
 
         // ---------- Juego ----------
         composable(Rutas.INICIO) {
+            val cuentaActual by SesionLocal.cuentaId.collectAsStateWithLifecycle()
+            if (cuentaActual != SesionLocal.INVITADO) {
+                PedirPermisoNotificaciones()
+                LaunchedEffect(rutaPendiente) {
+                    rutaPendiente?.let { ruta ->
+                        if (ruta != Rutas.INICIO) nav.navigate(ruta)
+                        alAbrirRuta()
+                    }
+                }
+            }
             PantallaInicio(alNavegar = { ruta -> nav.navigate(ruta) })
         }
         composable(Rutas.MODOS) {
