@@ -80,6 +80,33 @@ test('puntajes, rankings, amistades y códigos sueltos no se escriben desde el c
   await assertFails(setDoc(doc(bob(), 'codigos/ABCDEFGH'), { uid: 'bob' }));
 });
 
+// ---------- Código de amigo (T-51) ----------
+
+function reservarCodigo(db, uid, codigo, para = uid) {
+  const lote = writeBatch(db);
+  lote.set(doc(db, `codigos/${codigo}`), { uid: para });
+  lote.update(doc(db, `usuarios/${uid}`), { codigo });
+  return lote.commit();
+}
+
+test('un jugador reserva un código libre y lo copia a su perfil', async () => {
+  await assertSucceeds(reservarCodigo(bob(), 'bob', 'ABCDEFGH'));
+  await assertSucceeds(getDoc(doc(alicia(), 'codigos/ABCDEFGH')));
+});
+
+test('el código no se cambia después ni se reserva uno ocupado', async () => {
+  await reservarCodigo(bob(), 'bob', 'ABCDEFGH');
+  await assertFails(reservarCodigo(bob(), 'bob', 'HGFEDCBA'));
+  await registrar(alicia(), 'alicia', 'Alicia');
+  await assertFails(reservarCodigo(alicia(), 'alicia', 'ABCDEFGH'));
+});
+
+test('el código tiene 8 caracteres sin 0, O, 1 ni I, y no se reserva para otro', async () => {
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFG0'));
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFGHJ'));
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFGH', 'alicia'));
+});
+
 // ---------- Solicitudes de amistad ----------
 
 test('se envía una solicitud válida y solo la ven sus dos jugadores', async () => {
