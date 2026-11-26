@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avatar predefinido 3 (T-71). Diseño propio del equipo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#FFB020" android:pathData="M50,0 A50,50 0 1,1 49.99,0 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M50,24 L76,72 L24,72 Z" />
+</vector>

@@ -1,0 +1,6 @@
+{
+  "name": "preparar-catalogo",
+  "private": true,
+  "scripts": { "preparar": "node preparar.js" },
+  "dependencies": { "sharp": "^0.34.3" }
+}

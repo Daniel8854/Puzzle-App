@@ -34,8 +34,11 @@ google-services.json
 # Android Profiling
 *.hprof
 
+# Node (pruebas de reglas y herramientas)
 node_modules/
-.node_modules/
+*-debug.log
+.firebase/
 
-pruebas-reglas/pnpm-lock.yaml
-pruebas-reglas/pnpm-workspace.yaml
+# Catálogo
+herramientas/catalogo/node_modules/
+herramientas/catalogo/imagenes/

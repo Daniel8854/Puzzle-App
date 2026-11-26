@@ -1,0 +1,7 @@
+[
+  { "id": "incluida-atardecer", "titulo": "Atardecer", "archivo": "atardecer.jpg", "autor": "Equipo Puzzle Univalle", "origen": "Generada por código para la app", "licencia": "Propia" },
+  { "id": "incluida-montanas", "titulo": "Montañas", "archivo": "montanas.jpg", "autor": "Equipo Puzzle Univalle", "origen": "Generada por código para la app", "licencia": "Propia" },
+  { "id": "incluida-mosaico", "titulo": "Mosaico", "archivo": "mosaico.jpg", "autor": "Equipo Puzzle Univalle", "origen": "Generada por código para la app", "licencia": "Propia" },
+  { "id": "incluida-globos", "titulo": "Globos", "archivo": "globos.jpg", "autor": "Equipo Puzzle Univalle", "origen": "Generada por código para la app", "licencia": "Propia" },
+  { "id": "incluida-mar", "titulo": "Mar", "archivo": "mar.jpg", "autor": "Equipo Puzzle Univalle", "origen": "Generada por código para la app", "licencia": "Propia" }
+]
