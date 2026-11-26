@@ -80,9 +80,19 @@ open class ServicioCuentaFirebase(private val context: Context) : ServicioCuenta
         ResultadoCuenta.Exito
     }
 
-    /** La implementa T-18. */
-    override suspend fun enviarRecuperacion(correo: String): ResultadoCuenta =
-        ResultadoCuenta.Error(ErrorCuenta.DESCONOCIDO)
+    /**
+     * RF-04 (T-18): envía el enlace para crear una contraseña nueva. Si el correo no está
+     * registrado responde igual que si lo estuviera, para no revelar qué cuentas existen.
+     */
+    override suspend fun enviarRecuperacion(correo: String): ResultadoCuenta = conErrores(enLogin = false) {
+        Nube.auth.useAppLanguage()
+        try {
+            Nube.auth.sendPasswordResetEmail(correo.trim()).await()
+        } catch (e: FirebaseAuthException) {
+            if (e.errorCode != "ERROR_USER_NOT_FOUND") throw e
+        }
+        ResultadoCuenta.Exito
+    }
 
     /** La implementa T-16. */
     override suspend fun iniciarConGoogle(idToken: String): ResultadoCuenta =

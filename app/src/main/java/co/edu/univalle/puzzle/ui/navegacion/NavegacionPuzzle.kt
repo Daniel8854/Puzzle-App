@@ -9,6 +9,8 @@ import co.edu.univalle.puzzle.datos.cuenta.ServicioCuentaFirebase
 import co.edu.univalle.puzzle.datos.local.SesionLocal
 import co.edu.univalle.puzzle.ui.acceso.LoginViewModel
 import co.edu.univalle.puzzle.ui.acceso.PantallaLogin
+import co.edu.univalle.puzzle.ui.acceso.PantallaRecuperar
+import co.edu.univalle.puzzle.ui.acceso.RecuperarViewModel
 import co.edu.univalle.puzzle.ui.acceso.PantallaRegistro
 import co.edu.univalle.puzzle.ui.acceso.RegistroViewModel
 import co.edu.univalle.puzzle.ui.privacidad.PantallaAvisoPrivacidad
@@ -65,7 +67,9 @@ fun NavegacionPuzzle() {
                 alVerPrivacidad = { nav.navigate(Rutas.PRIVACIDAD) }
             )
         }
-        composable(Rutas.RECUPERAR) { PantallaEnConstruccion("Recuperar contraseña", volver) }
+        composable(Rutas.RECUPERAR) {
+            PantallaRecuperar(vm = viewModel(factory = RecuperarViewModel.fabrica(cuenta)), alVolver = volver)
+        }
         composable(Rutas.PRIVACIDAD) { PantallaAvisoPrivacidad(alEntendido = volver, alVolver = volver) }
 
         // ---------- Juego ----------
