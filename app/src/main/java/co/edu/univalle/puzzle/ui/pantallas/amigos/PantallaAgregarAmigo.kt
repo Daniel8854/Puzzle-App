@@ -41,6 +41,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import co.edu.univalle.puzzle.dominio.amigos.CodigoAmigo
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ButtonDefaults
 import co.edu.univalle.puzzle.ui.acceso.EncabezadoAcceso
 
 private val Rojo = Color(0xFFE0384C)
@@ -57,6 +59,7 @@ fun PantallaAgregarAmigo(
     alVerAmigos: () -> Unit,
     alVolver: () -> Unit,
     vm: AgregarAmigoViewModel = viewModel(factory = AgregarAmigoViewModel.fabrica()),
+    solicitudesVm: MisAmigosViewModel = viewModel(factory = MisAmigosViewModel.fabrica()),
 ) {
     val context = LocalContext.current
     val estado by vm.estado.collectAsStateWithLifecycle()
@@ -66,6 +69,13 @@ fun PantallaAgregarAmigo(
         estado.mensaje?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             vm.mensajeMostrado()
+        }
+    }
+    val solicitudes by solicitudesVm.estado.collectAsStateWithLifecycle()
+    LaunchedEffect(solicitudes.mensaje) {
+        solicitudes.mensaje?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            solicitudesVm.mensajeMostrado()
         }
     }
 
@@ -121,6 +131,27 @@ fun PantallaAgregarAmigo(
             resultados.forEach { jugador ->
                 FilaJugador(jugador, if (CodigoAmigo.esValido(buscado)) "Código $buscado" else "Jugador") {
                     Button(onClick = { vm.enviarSolicitud(jugador) }, shape = RoundedCornerShape(10.dp)) { Text("+ Agregar") }
+                }
+            }
+        }
+
+        // Solicitudes recibidas (T-53)
+        if (solicitudes.solicitudes.isNotEmpty()) {
+            TituloSeccion("Solicitudes recibidas")
+            solicitudes.solicitudes.forEach { s ->
+                FilaJugador(s.de, "Te envió una solicitud") {
+                    OutlinedButton(
+                        onClick = { solicitudesVm.rechazar(s) },
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Rojo),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Rojo),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)
+                    ) { Text("Rechazar") }
+                    Button(
+                        onClick = { solicitudesVm.aceptar(s) },
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)
+                    ) { Text("Aceptar") }
                 }
             }
         }

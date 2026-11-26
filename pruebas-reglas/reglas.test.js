@@ -134,3 +134,35 @@ test('solo quien la recibe la acepta o la rechaza', async () => {
   await assertFails(updateDoc(doc(alicia(), 'solicitudes/alicia_bob'), { estado: 'aceptada' }));
   await assertSucceeds(updateDoc(doc(bob(), 'solicitudes/alicia_bob'), { estado: 'aceptada' }));
 });
+
+// ---------- Amistades (T-53) ----------
+
+async function solicitudPendiente() {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'usuarios/alicia'), { nombre: 'Alicia', nombreMinusculas: 'alicia', avatar: 2 });
+    await setDoc(doc(db, 'solicitudes/alicia_bob'), { de: 'alicia', para: 'bob', estado: 'pendiente' });
+  });
+}
+
+function aceptar(db, estado = 'aceptada') {
+  const lote = writeBatch(db);
+  lote.update(doc(db, 'solicitudes/alicia_bob'), { estado });
+  lote.set(doc(db, 'usuarios/bob/amigos/alicia'), { nombre: 'Alicia', avatar: 2, desde: serverTimestamp() });
+  lote.set(doc(db, 'usuarios/alicia/amigos/bob'), { nombre: 'Bob', avatar: 1, desde: serverTimestamp() });
+  return lote.commit();
+}
+
+test('al aceptar, quien recibe la solicitud crea la amistad en las dos cuentas', async () => {
+  await solicitudPendiente();
+  await assertSucceeds(aceptar(bob()));
+  await assertSucceeds(getDoc(doc(alicia(), 'usuarios/alicia/amigos/bob')));
+  await assertFails(getDoc(doc(carlos(), 'usuarios/alicia/amigos/bob')));
+});
+
+test('no se crea una amistad sin solicitud aceptada ni la crea un tercero', async () => {
+  await solicitudPendiente();
+  await assertFails(aceptar(bob(), 'rechazada'));
+  await assertFails(aceptar(alicia()));
+  await assertFails(setDoc(doc(carlos(), 'usuarios/bob/amigos/alicia'), { nombre: 'X', avatar: 0, desde: serverTimestamp() }));
+});

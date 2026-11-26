@@ -1,6 +1,5 @@
 package co.edu.univalle.puzzle.datos.amigos
 
-import kotlinx.coroutines.launch
 import co.edu.univalle.puzzle.datos.nube.Nube
 import co.edu.univalle.puzzle.datos.nube.Nube.Colecciones
 import co.edu.univalle.puzzle.dominio.amigos.EstadoSolicitud
@@ -11,6 +10,8 @@ import co.edu.univalle.puzzle.dominio.amigos.Solicitudes.Busqueda
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,6 +23,9 @@ sealed interface EnvioSolicitud {
     data class Invalida(val motivo: SolicitudInvalida) : EnvioSolicitud
     data object Fallo : EnvioSolicitud
 }
+
+/** Solicitud pendiente que llegó de [de]. */
+data class SolicitudRecibida(val id: String, val de: JugadorEncontrado)
 
 /** Amigos en Firestore (T-51, T-52, T-53). Solo se usa con cuenta: el invitado no llega a estas pantallas. */
 /**
@@ -37,6 +41,15 @@ interface FuenteAmigos {
 
     /** Envía la solicitud de amistad a [para] (RF-40). */
     suspend fun enviarSolicitud(para: String): EnvioSolicitud
+
+    /** Solicitudes pendientes que me llegaron (RF-41). */
+    fun recibidas(): Flow<List<SolicitudRecibida>>
+
+    /** Acepta o rechaza una solicitud. Devuelve si se pudo (RF-41). */
+    suspend fun responder(solicitudId: String, aceptar: Boolean): Boolean
+
+    /** Amigos aceptados, en orden alfabético. */
+    fun amigos(): Flow<List<JugadorEncontrado>>
 }
 
 class RepositorioAmigos : FuenteAmigos {
@@ -127,6 +140,64 @@ class RepositorioAmigos : FuenteAmigos {
         } catch (e: Exception) {
             EnvioSolicitud.Fallo
         }
+    }
+
+    /** RF-41 (T-53): solicitudes pendientes que me llegaron, con el nombre de quien la envía. */
+    override fun recibidas(): Flow<List<SolicitudRecibida>> = callbackFlow {
+        val yo = Nube.uid ?: run { trySend(emptyList()); close(); return@callbackFlow }
+        val registro = db.collection(Colecciones.SOLICITUDES)
+            .whereEqualTo("para", yo)
+            .whereEqualTo("estado", EstadoSolicitud.PENDIENTE.clave)
+            .orderBy("creadaEn", Query.Direction.DESCENDING)
+            .addSnapshotListener { consulta, _ ->
+                val docs = consulta?.documents.orEmpty()
+                launch {
+                    trySend(docs.mapNotNull { d ->
+                        val de = d.getString("de") ?: return@mapNotNull null
+                        val perfil = runCatching { db.collection(Colecciones.USUARIOS).document(de).get().await() }.getOrNull()
+                        SolicitudRecibida(d.id, perfil?.let(::jugador) ?: JugadorEncontrado(de, "Jugador", 0))
+                    })
+                }
+            }
+        awaitClose { registro.remove() }
+    }
+
+    /**
+     * Acepta o rechaza (RF-41). Al aceptar, en la misma operación se crea la amistad en las dos
+     * cuentas con el nombre y el avatar de cada uno; las reglas de T-53 solo lo permiten si la
+     * solicitud queda aceptada.
+     */
+    override suspend fun responder(solicitudId: String, aceptar: Boolean): Boolean = runCatching {
+        val ref = db.collection(Colecciones.SOLICITUDES).document(solicitudId)
+        if (aceptar) aceptarSolicitud(ref) else ref.update("estado", EstadoSolicitud.RECHAZADA.clave).await()
+        Unit
+    }.isSuccess
+
+    private suspend fun aceptarSolicitud(ref: com.google.firebase.firestore.DocumentReference) {
+        val yo = Nube.uid ?: error("sin sesión")
+        val otro = ref.get().await().getString("de") ?: error("solicitud sin remitente")
+        val usuarios = db.collection(Colecciones.USUARIOS)
+        val perfilYo = usuarios.document(yo).get().await()
+        val perfilOtro = usuarios.document(otro).get().await()
+        fun amistad(perfil: DocumentSnapshot) = mapOf(
+            "nombre" to perfil.getString("nombre").orEmpty(),
+            "avatar" to (perfil.getLong("avatar") ?: 0L),
+            "desde" to FieldValue.serverTimestamp()
+        )
+        db.batch().apply {
+            update(ref, "estado", EstadoSolicitud.ACEPTADA.clave)
+            set(usuarios.document(yo).collection(Colecciones.AMIGOS).document(otro), amistad(perfilOtro))
+            set(usuarios.document(otro).collection(Colecciones.AMIGOS).document(yo), amistad(perfilYo))
+        }.commit().await()
+    }
+
+    /** Amigos aceptados, en orden alfabético. */
+    override fun amigos(): Flow<List<JugadorEncontrado>> = callbackFlow {
+        val yo = Nube.uid ?: run { trySend(emptyList()); close(); return@callbackFlow }
+        val registro = db.collection(Colecciones.USUARIOS).document(yo).collection(Colecciones.AMIGOS)
+            .orderBy("nombre")
+            .addSnapshotListener { consulta, _ -> trySend(consulta?.documents.orEmpty().mapNotNull(::jugador)) }
+        awaitClose { registro.remove() }
     }
 
     /** Estado de una solicitud propia; si no existe, las reglas niegan la lectura y se toma como null. */

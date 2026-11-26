@@ -39,10 +39,23 @@ service cloud.firestore {
       match /privado/{privado} {
         allow read, write: if esYo(uid);
       }
-      // Amigos aceptados: los crea T-53 al aceptar una solicitud.
+      // Amigos aceptados (T-53). Quien acepta la solicitud crea la amistad en las dos cuentas en
+      // la misma operación; solo se permite si esa solicitud queda aceptada.
       match /amigos/{amigo} {
+        function solicitudAceptada() {
+          return getAfter(docEn('solicitudes/' + amigo + '_' + uid)).data.estado == 'aceptada'
+            || getAfter(docEn('solicitudes/' + uid + '_' + amigo)).data.estado == 'aceptada';
+        }
         allow read: if esYo(uid);
-        allow write: if false;
+        allow create: if conSesion()
+          && request.auth.uid in [uid, amigo]
+          && uid != amigo
+          && request.resource.data.keys().hasOnly(['nombre', 'avatar', 'desde'])
+          && request.resource.data.nombre is string
+          && request.resource.data.avatar is int
+          && request.resource.data.desde == request.time
+          && solicitudAceptada();
+        allow update, delete: if false;
       }
     }
 
