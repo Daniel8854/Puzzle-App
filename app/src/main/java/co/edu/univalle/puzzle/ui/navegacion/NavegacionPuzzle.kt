@@ -2,13 +2,22 @@ package co.edu.univalle.puzzle.ui.navegacion
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import co.edu.univalle.puzzle.datos.cuenta.ServicioCuentaFirebase
+import co.edu.univalle.puzzle.datos.local.SesionLocal
+import co.edu.univalle.puzzle.ui.acceso.LoginViewModel
+import co.edu.univalle.puzzle.ui.acceso.PantallaLogin
+import co.edu.univalle.puzzle.ui.acceso.PantallaRegistro
+import co.edu.univalle.puzzle.ui.acceso.RegistroViewModel
+import co.edu.univalle.puzzle.ui.privacidad.PantallaAvisoPrivacidad
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import co.edu.univalle.puzzle.ui.pantallas.PantallaAccesoProvisional
 import co.edu.univalle.puzzle.ui.pantallas.PantallaEnConstruccion
 import co.edu.univalle.puzzle.ui.pantallas.PantallaInicio
 import co.edu.univalle.puzzle.ui.pantallas.amigos.PantallaAgregarAmigo
@@ -20,6 +29,7 @@ import co.edu.univalle.puzzle.ui.pantallas.misfotos.PantallaMisFotos
 import co.edu.univalle.puzzle.ui.pantallas.modos.PantallaModos
 import co.edu.univalle.puzzle.ui.pantallas.partida.PantallaPartida
 
+/** Lleva a Inicio y borra las pantallas de acceso del historial. */
 fun NavHostController.irAInicio() = navigate(Rutas.INICIO) {
     popUpTo(Rutas.LOGIN) { inclusive = true }
 }
@@ -27,18 +37,38 @@ fun NavHostController.irAInicio() = navigate(Rutas.INICIO) {
 @Composable
 fun NavegacionPuzzle() {
     val nav = rememberNavController()
+    val context = LocalContext.current
+    val cuenta = remember { ServicioCuentaFirebase(context.applicationContext) }
     val volver: () -> Unit = { nav.popBackStack() }
     val crearCuenta: () -> Unit = { nav.navigate(Rutas.REGISTRO) }
 
     NavHost(navController = nav, startDestination = Rutas.LOGIN) {
-        // Provisional hasta que T-15 conecte las pantallas de T-19.
-        composable(Rutas.LOGIN) {
-            PantallaAccesoProvisional(alEntrar = { nav.irAInicio() })
-        }
-        composable(Rutas.REGISTRO) { PantallaEnConstruccion("Crear cuenta", volver) }
-        composable(Rutas.RECUPERAR) { PantallaEnConstruccion("Recuperar contraseña", volver) }
-        composable(Rutas.PRIVACIDAD) { PantallaEnConstruccion("Aviso de privacidad", volver) }
 
+        // ---------- Acceso: pantallas de T-19 y T-65 con Firebase (T-15) ----------
+        composable(Rutas.LOGIN) {
+            PantallaLogin(
+                vm = viewModel(factory = LoginViewModel.fabrica(cuenta)),
+                alEntrar = { nav.irAInicio() },
+                alIrARegistro = { nav.navigate(Rutas.REGISTRO) },
+                alIrARecuperar = { nav.navigate(Rutas.RECUPERAR) },
+                alJugarComoInvitado = {
+                    SesionLocal.usarInvitado()
+                    nav.irAInicio()
+                }
+            )
+        }
+        composable(Rutas.REGISTRO) {
+            PantallaRegistro(
+                vm = viewModel(factory = RegistroViewModel.fabrica(cuenta)),
+                alRegistrado = { nav.irAInicio() },
+                alVolver = volver,
+                alVerPrivacidad = { nav.navigate(Rutas.PRIVACIDAD) }
+            )
+        }
+        composable(Rutas.RECUPERAR) { PantallaEnConstruccion("Recuperar contraseña", volver) }
+        composable(Rutas.PRIVACIDAD) { PantallaAvisoPrivacidad(alEntendido = volver, alVolver = volver) }
+
+        // ---------- Juego ----------
         composable(Rutas.INICIO) {
             PantallaInicio(alNavegar = { ruta -> nav.navigate(ruta) })
         }
@@ -67,6 +97,7 @@ fun NavegacionPuzzle() {
             )
         }
 
+        // ---------- Fotos ----------
         composable(Rutas.MIS_FOTOS) {
             PantallaMisFotos(
                 alAgregarFoto = { nav.navigate(Rutas.PERMISO_FOTOS) },
@@ -104,6 +135,7 @@ fun NavegacionPuzzle() {
             )
         }
 
+        // ---------- Secciones que requieren cuenta ----------
         composable(Rutas.AMIGOS) {
             SeccionProtegida("Amigos", crearCuenta, volver) {
                 PantallaAgregarAmigo(
