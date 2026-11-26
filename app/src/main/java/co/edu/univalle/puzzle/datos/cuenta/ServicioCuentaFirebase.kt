@@ -11,6 +11,7 @@ import co.edu.univalle.puzzle.dominio.cuenta.ServicioCuenta
 import co.edu.univalle.puzzle.dominio.privacidad.AvisoPrivacidad
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.tasks.await
@@ -94,9 +95,61 @@ open class ServicioCuentaFirebase(private val context: Context) : ServicioCuenta
         ResultadoCuenta.Exito
     }
 
-    /** La implementa T-16. */
-    override suspend fun iniciarConGoogle(idToken: String): ResultadoCuenta =
-        ResultadoCuenta.Error(ErrorCuenta.DESCONOCIDO)
+    /**
+     * Verdadero después de entrar con Google por primera vez: falta elegir el nombre de jugador
+     * y aceptar el aviso (pantalla «Completa tu perfil», T-16).
+     */
+    var perfilPendiente: Boolean = false
+        private set
+
+    /**
+     * RF-01 y RF-02 con Google (T-16): registra al jugador nuevo o inicia sesión del que ya existe.
+     * El usuario de Google no tiene contraseña guardada (RNF-14).
+     */
+    override suspend fun iniciarConGoogle(idToken: String): ResultadoCuenta = conErrores(enLogin = true) {
+        val credencial = GoogleAuthProvider.getCredential(idToken, null)
+        val uid = Nube.auth.signInWithCredential(credencial).await().user?.uid
+            ?: return@conErrores ResultadoCuenta.Error(ErrorCuenta.DESCONOCIDO)
+        perfilPendiente = !Nube.firestore.collection(Colecciones.USUARIOS).document(uid).get().await().exists()
+        SesionLocal.usarCuenta(uid)
+        ResultadoCuenta.Exito
+    }
+
+    /** Crea el perfil del jugador que entró con Google: nombre único, avatar y consentimiento. */
+    suspend fun completarPerfil(nombre: String, avatar: Int, mayorDeEdad: Boolean, aceptoPrivacidad: Boolean): ResultadoCuenta =
+        conErrores(enLogin = false) {
+            val usuario = Nube.auth.currentUser ?: return@conErrores ResultadoCuenta.Error(ErrorCuenta.DESCONOCIDO)
+            val consentimiento = AvisoPrivacidad.consentir(aceptoPrivacidad, mayorDeEdad, System.currentTimeMillis())
+            val nombreClave = nombre.trim().lowercase()
+            val db = Nube.firestore
+            if (db.collection(Colecciones.NOMBRES).document(nombreClave).get().await().exists()) {
+                return@conErrores ResultadoCuenta.Error(ErrorCuenta.NOMBRE_EN_USO)
+            }
+            try {
+                db.batch().apply {
+                    set(db.collection(Colecciones.NOMBRES).document(nombreClave), mapOf("uid" to usuario.uid))
+                    set(db.collection(Colecciones.USUARIOS).document(usuario.uid), mapOf(
+                        "nombre" to nombre.trim(),
+                        "nombreMinusculas" to nombreClave,
+                        "avatar" to avatar,
+                        "creadoEn" to FieldValue.serverTimestamp()
+                    ))
+                    set(db.collection(Colecciones.USUARIOS).document(usuario.uid).collection("privado").document("datos"), mapOf(
+                        "correo" to usuario.email.orEmpty(),
+                        "avisoVersion" to consentimiento.version,
+                        "avisoAceptadoEn" to consentimiento.aceptadoEnMillis,
+                        "mayorDeEdad" to consentimiento.mayorDeEdad
+                    ))
+                }.commit().await()
+            } catch (e: FirebaseFirestoreException) {
+                if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                    return@conErrores ResultadoCuenta.Error(ErrorCuenta.NOMBRE_EN_USO)
+                }
+                throw e
+            }
+            perfilPendiente = false
+            ResultadoCuenta.Exito
+        }
 
     /** Cierra la sesión; el teléfono vuelve a los datos del invitado. */
     fun cerrarSesion() {

@@ -3,6 +3,10 @@ package co.edu.univalle.puzzle.ui.navegacion
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import co.edu.univalle.puzzle.datos.cuenta.SelectorGoogle
+import co.edu.univalle.puzzle.ui.acceso.CompletarPerfilViewModel
+import co.edu.univalle.puzzle.ui.acceso.PantallaCompletarPerfil
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.univalle.puzzle.datos.cuenta.ServicioCuentaFirebase
@@ -43,14 +47,27 @@ fun NavegacionPuzzle() {
     val cuenta = remember { ServicioCuentaFirebase(context.applicationContext) }
     val volver: () -> Unit = { nav.popBackStack() }
     val crearCuenta: () -> Unit = { nav.navigate(Rutas.REGISTRO) }
+    // Quien entra con Google por primera vez completa su perfil antes de ir a Inicio (T-16).
+    val entrarOCompletar: () -> Unit = {
+        if (cuenta.perfilPendiente) {
+            nav.navigate(Rutas.COMPLETAR_PERFIL) { popUpTo(Rutas.LOGIN) { inclusive = true } }
+        } else {
+            nav.irAInicio()
+        }
+    }
 
     NavHost(navController = nav, startDestination = Rutas.LOGIN) {
 
         // ---------- Acceso: pantallas de T-19 y T-65 con Firebase (T-15) ----------
         composable(Rutas.LOGIN) {
+            val vm: LoginViewModel = viewModel(factory = LoginViewModel.fabrica(cuenta))
             PantallaLogin(
-                vm = viewModel(factory = LoginViewModel.fabrica(cuenta)),
-                alEntrar = { nav.irAInicio() },
+                vm = vm,
+                alEntrar = { entrarOCompletar() },
+                // T-16: el selector de Google entrega el token y Firebase registra o inicia sesión.
+                alContinuarConGoogle = {
+                    vm.continuarConGoogle { SelectorGoogle.pedirToken(context) }
+                },
                 alIrARegistro = { nav.navigate(Rutas.REGISTRO) },
                 alIrARecuperar = { nav.navigate(Rutas.RECUPERAR) },
                 alJugarComoInvitado = {
@@ -60,10 +77,24 @@ fun NavegacionPuzzle() {
             )
         }
         composable(Rutas.REGISTRO) {
+            val vm: RegistroViewModel = viewModel(factory = RegistroViewModel.fabrica(cuenta))
             PantallaRegistro(
-                vm = viewModel(factory = RegistroViewModel.fabrica(cuenta)),
-                alRegistrado = { nav.irAInicio() },
+                vm = vm,
+                // Con correo el perfil queda completo y va a Inicio; con Google puede faltar completarlo.
+                alRegistrado = { entrarOCompletar() },
                 alVolver = volver,
+                alVerPrivacidad = { nav.navigate(Rutas.PRIVACIDAD) },
+                alContinuarConGoogle = {
+                    vm.continuarConGoogle { SelectorGoogle.pedirToken(context) }
+                }
+            )
+        }
+        composable(Rutas.COMPLETAR_PERFIL) {
+            PantallaCompletarPerfil(
+                vm = viewModel(factory = CompletarPerfilViewModel.fabrica(cuenta::completarPerfil)),
+                alListo = {
+                    nav.navigate(Rutas.INICIO) { popUpTo(Rutas.COMPLETAR_PERFIL) { inclusive = true } }
+                },
                 alVerPrivacidad = { nav.navigate(Rutas.PRIVACIDAD) }
             )
         }
