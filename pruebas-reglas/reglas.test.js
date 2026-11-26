@@ -80,6 +80,33 @@ test('puntajes, rankings, amistades y códigos sueltos no se escriben desde el c
   await assertFails(setDoc(doc(bob(), 'codigos/ABCDEFGH'), { uid: 'bob' }));
 });
 
+// ---------- Código de amigo (T-51) ----------
+
+function reservarCodigo(db, uid, codigo, para = uid) {
+  const lote = writeBatch(db);
+  lote.set(doc(db, `codigos/${codigo}`), { uid: para });
+  lote.update(doc(db, `usuarios/${uid}`), { codigo });
+  return lote.commit();
+}
+
+test('un jugador reserva un código libre y lo copia a su perfil', async () => {
+  await assertSucceeds(reservarCodigo(bob(), 'bob', 'ABCDEFGH'));
+  await assertSucceeds(getDoc(doc(alicia(), 'codigos/ABCDEFGH')));
+});
+
+test('el código no se cambia después ni se reserva uno ocupado', async () => {
+  await reservarCodigo(bob(), 'bob', 'ABCDEFGH');
+  await assertFails(reservarCodigo(bob(), 'bob', 'HGFEDCBA'));
+  await registrar(alicia(), 'alicia', 'Alicia');
+  await assertFails(reservarCodigo(alicia(), 'alicia', 'ABCDEFGH'));
+});
+
+test('el código tiene 8 caracteres sin 0, O, 1 ni I, y no se reserva para otro', async () => {
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFG0'));
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFGHJ'));
+  await assertFails(reservarCodigo(bob(), 'bob', 'ABCDEFGH', 'alicia'));
+});
+
 // ---------- Solicitudes de amistad ----------
 
 test('se envía una solicitud válida y solo la ven sus dos jugadores', async () => {
@@ -106,4 +133,36 @@ test('solo quien la recibe la acepta o la rechaza', async () => {
     setDoc(doc(ctx.firestore(), 'solicitudes/alicia_bob'), { de: 'alicia', para: 'bob', estado: 'pendiente' }));
   await assertFails(updateDoc(doc(alicia(), 'solicitudes/alicia_bob'), { estado: 'aceptada' }));
   await assertSucceeds(updateDoc(doc(bob(), 'solicitudes/alicia_bob'), { estado: 'aceptada' }));
+});
+
+// ---------- Amistades (T-53) ----------
+
+async function solicitudPendiente() {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'usuarios/alicia'), { nombre: 'Alicia', nombreMinusculas: 'alicia', avatar: 2 });
+    await setDoc(doc(db, 'solicitudes/alicia_bob'), { de: 'alicia', para: 'bob', estado: 'pendiente' });
+  });
+}
+
+function aceptar(db, estado = 'aceptada') {
+  const lote = writeBatch(db);
+  lote.update(doc(db, 'solicitudes/alicia_bob'), { estado });
+  lote.set(doc(db, 'usuarios/bob/amigos/alicia'), { nombre: 'Alicia', avatar: 2, desde: serverTimestamp() });
+  lote.set(doc(db, 'usuarios/alicia/amigos/bob'), { nombre: 'Bob', avatar: 1, desde: serverTimestamp() });
+  return lote.commit();
+}
+
+test('al aceptar, quien recibe la solicitud crea la amistad en las dos cuentas', async () => {
+  await solicitudPendiente();
+  await assertSucceeds(aceptar(bob()));
+  await assertSucceeds(getDoc(doc(alicia(), 'usuarios/alicia/amigos/bob')));
+  await assertFails(getDoc(doc(carlos(), 'usuarios/alicia/amigos/bob')));
+});
+
+test('no se crea una amistad sin solicitud aceptada ni la crea un tercero', async () => {
+  await solicitudPendiente();
+  await assertFails(aceptar(bob(), 'rechazada'));
+  await assertFails(aceptar(alicia()));
+  await assertFails(setDoc(doc(carlos(), 'usuarios/bob/amigos/alicia'), { nombre: 'X', avatar: 0, desde: serverTimestamp() }));
 });
