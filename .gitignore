@@ -36,3 +36,6 @@ google-services.json
 
 node_modules/
 .node_modules/
+
+pruebas-reglas/pnpm-lock.yaml
+pruebas-reglas/pnpm-workspace.yaml
